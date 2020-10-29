@@ -33,7 +33,7 @@ jobs:
       - name: Deploy
         run : |
               zip -r deployment-${{ github.sha }}.zip .
-              aws s3 cp deployment-${{ github.sha }}.zip s3://docker-react
+              aws s3 cp deployment-${{ github.sha }}.zip s3://elasticbeanstalk-us-east-1-842427811117
               aws elasticbeanstalk create-application-version --application-name docker-react \
                   --version-label ${{ github.sha }} --source-bundle S3Bucket="elasticbeanstalk-us-east-1-842427811117",S3Key="deployment-${{ github.sha }}.zip"
               aws elasticbeanstalk update-environment --application-name docker-react \
