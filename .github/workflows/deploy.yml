@@ -37,7 +37,7 @@ jobs:
               aws elasticbeanstalk create-application-version --application-name docker-react \
                   --version-label ${{ github.sha }} --source-bundle S3Bucket="elasticbeanstalk-us-east-1-842427811117",S3Key="deployment-${{ github.sha }}.zip"
               aws elasticbeanstalk update-environment --application-name docker-react \
-                  --environment-name staging --version-label ${{ github.sha }}
+                  --environment-name DockerReact-env --version-label ${{ github.sha }}
           
       - name: Deployed successfully!
         run: echo App deployed to ELB
