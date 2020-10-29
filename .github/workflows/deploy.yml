@@ -10,45 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [12.x]
     steps:
       - uses: actions/checkout@v2.3.3
-#       - name: Cache npm packages
-#         uses: actions/cache@v2.1.2
-#         with:
-#           path: ~/.npm
-#           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-#           restore-keys: |
-#             ${{ runner.os }}-node-
-#       - name: Setup Node ${{ matrix.node-version }} environment 
-#         uses: actions/setup-node@v2.1.2
-#         with:
-#           node-version: ${{ matrix.node-version }}
-      
-#       - name: Installing dependencies
-#         run: npm install
-      
-#       - name: Building application
-#         run: npm run build
-
-#       - name: Generate deployment package
-#         run: zip -r deploy.zip * -x "**node_modules**"
-
-#       - name: Get timestamp
-#         uses: gerred/current-time@v1.0.0
-#         id: current-time
-
-#       - name: Run string replace
-#         uses: frabert/replace-string-action@v1.2
-#         id: format-time
-#         with:
-#           pattern: '[:\.]+'
-#           string: "${{ steps.current-time.outputs.time }}"
-#           replace-with: '-'
-#           flags: 'g'
-      
       - name: Build docker image
         run: docker build -t ajmoro/docker-react .
 #       - name: Run tests
