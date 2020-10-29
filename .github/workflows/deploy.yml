@@ -12,54 +12,69 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [10.x]
+        node-version: [12.x]
     steps:
       - uses: actions/checkout@v2.3.3
-      - name: Cache
-        uses: actions/cache@v2.1.2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v2.1.2
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Installing NPM
-        run: npm install
-      - name: Building application
-        run: npm run build
+#       - name: Cache npm packages
+#         uses: actions/cache@v2.1.2
+#         with:
+#           path: ~/.npm
+#           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+#           restore-keys: |
+#             ${{ runner.os }}-node-
+#       - name: Setup Node ${{ matrix.node-version }} environment 
+#         uses: actions/setup-node@v2.1.2
+#         with:
+#           node-version: ${{ matrix.node-version }}
+      
+#       - name: Installing dependencies
+#         run: npm install
+      
+#       - name: Building application
+#         run: npm run build
 
-      - name: Generate deployment package
-        run: zip -r deploy.zip * -x "**node_modules**"
+#       - name: Generate deployment package
+#         run: zip -r deploy.zip * -x "**node_modules**"
 
-      - name: Get timestamp
-        uses: gerred/current-time@v1.0.0
-        id: current-time
+#       - name: Get timestamp
+#         uses: gerred/current-time@v1.0.0
+#         id: current-time
 
-      - name: Run string replace
-        uses: frabert/replace-string-action@v1.2
-        id: format-time
-        with:
-          pattern: '[:\.]+'
-          string: "${{ steps.current-time.outputs.time }}"
-          replace-with: '-'
-          flags: 'g'
-#       - name: Build docker image
-#         run: docker build -t aelshamy/docker-react .
+#       - name: Run string replace
+#         uses: frabert/replace-string-action@v1.2
+#         id: format-time
+#         with:
+#           pattern: '[:\.]+'
+#           string: "${{ steps.current-time.outputs.time }}"
+#           replace-with: '-'
+#           flags: 'g'
+      
+      - name: Build docker image
+        run: docker build -t ajmoro/docker-react .
 #       - name: Run tests
 #         run: docker run -e CI=true aelshamy/docker-react npm run test
-      - name: Beanstalk Deploy
-        uses: einaregilsson/beanstalk-deploy@v13
+      - name: Login to Docker Hub
+        run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+        env:
+          DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
+          DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+      - name: Push Image to Docker Hub
+        run: docker push ajmoro/docker-react
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws_access_key: ${{secrets.AWS_ACCESS_KEY}}
-          aws_secret_key: ${{secrets.AWS_SECRET_KEY}}
-          region: "us-east-1"
-          application_name: "docker-react"
-          environment_name: "DockerReact-env"
-          version_label: "my-app-${{ steps.format-time.outputs.replaced }}"
-          deployment_package: deploy.zip
+          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_KEY}}
+          aws-region: eu-east-1
+      - name: Deploy
+        run : |
+              zip -r deployment-${{ github.sha }}.zip .
+              aws s3 cp deployment-${{ github.sha }}.zip s3://docker-react
+              aws elasticbeanstalk create-application-version --application-name docker-react \
+                  --version-label ${{ github.sha }} --source-bundle S3Bucket="elasticbeanstalk-us-east-1-842427811117",S3Key="deployment-${{ github.sha }}.zip"
+              aws elasticbeanstalk update-environment --application-name docker-react \
+                  --environment-name staging --version-label ${{ github.sha }}
           
       - name: Deployed successfully!
         run: echo App deployed to ELB
