@@ -1,6 +1,10 @@
 language: ruby
 
 sudo: required
+matrix:
+  include:
+    - dist: bionic
+    - dist: xenial
 services:
   - docker
 
