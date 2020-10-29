@@ -1,10 +1,9 @@
-language: ruby
+language: node_js
+node_js:
+  - "12"
 
 sudo: required
-matrix:
-  include:
-    - dist: bionic
-    - dist: xenial
+
 services:
   - docker
 
