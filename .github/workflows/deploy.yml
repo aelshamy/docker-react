@@ -21,6 +21,9 @@ jobs:
         with:
           aws_access_key: ${{secrets.AWS_ACCESS_KEY}}
           aws_secret_key: ${{secrets.AWS_SECRET_KEY}}
-          region: us-east-1
-          application_name: docker-react
-          environment_name: DockerReact-env
+          region: "us-east-1"
+          application_name: "docker-react"
+          environment_name: "DockerReact-env"
+          version_label: "my-app-${{ steps.format-time.outputs.replaced }}"
+      - name: Deployed successfully!
+        run: echo App deployed to ELB
