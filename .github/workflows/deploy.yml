@@ -1,0 +1,43 @@
+name: CI
+
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.3
+      - name: Build docker image
+        run: docker build -t ajmoro/docker-react .
+#       - name: Run tests
+#         run: docker run -e CI=true aelshamy/docker-react npm run test
+      - name: Login to Docker Hub
+        run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+        env:
+          DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
+          DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+      - name: Push Image to Docker Hub
+        run: docker push ajmoro/docker-react
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY}}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_KEY}}
+          aws-region: us-east-1
+      - name: Deploy
+        run : |
+              zip -r deployment-${{ github.sha }}.zip *.git* *.github* .
+              aws s3 cp deployment-${{ github.sha }}.zip s3://elasticbeanstalk-us-east-1-842427811117
+              aws elasticbeanstalk create-application-version --application-name docker-react \
+                  --version-label ${{ github.sha }} --source-bundle S3Bucket="elasticbeanstalk-us-east-1-842427811117",S3Key="deployment-${{ github.sha }}.zip"
+              aws elasticbeanstalk update-environment --application-name docker-react \
+                  --environment-name DockerReact-env --version-label ${{ github.sha }}
+          
+      - name: Deployed successfully!
+        run: echo App deployed to ELB
