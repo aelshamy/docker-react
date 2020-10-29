@@ -59,5 +59,7 @@ jobs:
           application_name: "docker-react"
           environment_name: "DockerReact-env"
           version_label: "my-app-${{ steps.format-time.outputs.replaced }}"
+          deployment_package: deploy.zip
+          
       - name: Deployed successfully!
         run: echo App deployed to ELB
